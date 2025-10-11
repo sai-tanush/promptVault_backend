@@ -34,7 +34,6 @@ const UserSchema = new Schema<IUserDocument>({
     collection: 'users'
 });
 
-
 // Pre-Save Hook (Password Hashing)
 UserSchema.pre('save', async function (next) {
     const user = this;
@@ -55,7 +54,30 @@ UserSchema.pre('save', async function (next) {
 	}
 });
 
-// 3. Instance Methods (Password Comparison)
+UserSchema.pre('findOneAndUpdate', async function (next) {
+  const update = this.getUpdate() as any;
+  if (!update) return next();
+
+  const password = update.password || update.$set?.password;
+  if (!password) return next();
+
+  try {
+    const salt = await bcrypt.genSalt(10);
+    const hashed = await bcrypt.hash(password, salt);
+
+    if (update.password) {
+      update.password = hashed;
+    } else {
+      update.$set.password = hashed;
+    }
+    next();
+  } catch (err) {
+    next(err as Error);
+  }
+});
+
+
+// Instance Methods (Password Comparison)
 UserSchema.methods.comparePassword = async function (candidatePassword: string): Promise<boolean> {
     return bcrypt.compare(candidatePassword, this.password!);
 };
