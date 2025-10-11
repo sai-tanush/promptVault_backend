@@ -40,3 +40,23 @@ const UserSchema = new Schema<IUserDocument>({
     collection: 'users'
 });
 
+
+// Pre-Save Hook (Password Hashing)
+UserSchema.pre('save', async function (next) {
+    const user = this;
+
+    // Only hash the password if it has been modified (or is new)
+    if (!user.isModified('password')) {
+        return next();
+    }
+
+    try {
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(user.password!, salt);
+        user.password = hashedPassword;
+        
+        next();
+    }catch (error: any) {
+        next(error);
+	}
+});
