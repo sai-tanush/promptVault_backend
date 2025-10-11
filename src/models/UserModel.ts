@@ -10,12 +10,6 @@ const UserSchema = new Schema<IUserDocument>({
         trim: true,
         maxlength: 50,
     },
-	first_name: {
-		tyep: String,
-		required: [true, "First name is required"],
-		trim: true,
-		maxlength: 50,
-	},
     email: {
         type: String,
         required: [true, 'Email is required'],
