@@ -1,6 +1,12 @@
 import { Schema, model, Types } from 'mongoose';
 import { IPromptVersionDocument } from '../interfaces/IPromptVersion';
 
+const PromptVersionObject = new Schema({
+    title: { type: String, required: true },
+    description: { type: String, required: true },
+    tags: { type: [String], required: true},
+}, { _id: false }); 
+
 const PromptVersionSchema = new Schema<IPromptVersionDocument>({
   promptId: {
     type: Schema.Types.ObjectId,
@@ -16,12 +22,12 @@ const PromptVersionSchema = new Schema<IPromptVersionDocument>({
   },
 
   beforeObject: {
-    type: Object,
+    type: PromptVersionObject,
     default: null,
   },
 
   afterObject: {
-    type: Object,
+    type: PromptVersionObject,
     default: null,
   },
 
