@@ -1,15 +1,15 @@
 import { Document, Types } from 'mongoose';
+export interface IPromptObjects {
+    title: string;
+    description: string;
+    tags: string[];
+}
 export interface IPromptVersion {
   promptId: Types.ObjectId; 
-
   event: 'create' | 'update' | 'delete';
-
-  beforeObject?: Record<string, any> | null;
-
-  afterObject?: Record<string, any> | null;
-
+  beforeObject?: IPromptObjects | null;
+  afterObject?: IPromptObjects | null;
   versionNumber: number;
-
   createdAt: Date;
 }
 
