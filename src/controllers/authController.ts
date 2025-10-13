@@ -17,13 +17,13 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
     // Check for existing user
     const userExists = await User.findOne({ email });
     if (userExists) {
-      res.status(409).json({ message: 'Email already in use' }); // 409 Conflict
+      res.status(409).json({ message: 'Email already in use' });
       return;
     }
 
     // Create new user
     const user: IUserDocument = await User.create({ username, email, password });
-    const token = generateToken(user._id.toString());
+    const token = generateToken((user._id as String).toString());
 
     // Respond success
     res.status(201).json({
