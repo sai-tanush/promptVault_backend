@@ -1,6 +1,6 @@
 import { Schema, model } from 'mongoose';
 import * as bcrypt from 'bcryptjs';
-import { IUserDocument } from '../interfaces/IUser';
+import { IUserDocument, IUserModel } from '../interfaces/IUser';
 
 const UserSchema = new Schema<IUserDocument>({
     username: {
@@ -77,8 +77,8 @@ UserSchema.pre('findOneAndUpdate', async function (next) {
 });
 
 // Instance Methods
-UserSchema.methods.comparePassword = async function (candidatePassword: string): Promise<boolean> {
-  return bcrypt.compare(candidatePassword, this.password!);
+UserSchema.methods.comparePassword = async function (enteredPassword: string): Promise<boolean> {
+  return bcrypt.compare(enteredPassword, this.password!);
 };
 
 // Static authenticate method
@@ -92,6 +92,6 @@ UserSchema.statics.authenticate = async function (email: string, password: strin
   return user;
 };
 
-const User = model<IUserDocument>('User', UserSchema);
+const User = model<IUserDocument, IUserModel>('User', UserSchema);
 
 export default User;
