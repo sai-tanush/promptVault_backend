@@ -50,3 +50,45 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
     res.status(500).json({ message: 'Internal server error' });
   }
 };
+
+export const loginUser = async (req: Request, res: Response) : Promise<void> => {
+
+  try{
+    const { email, password } = req.body;
+
+    //Basic validation
+    if( !email || !password){
+      res.status(400).json({ message: 'email & password are required' });
+      return;
+    }
+
+    //Check user credentials
+    const user = await User.authenticate(email, password);
+    if (!user) {
+      res.status(401).json({ message: 'Invalid credentials' });
+      return;
+    }
+
+    const token = generateToken((user._id as String).toString());
+
+    // Respond success
+    res.status(200).json({
+      message: 'User logged-in successfully',
+      user: { id: user._id, username: user.username, email: user.email },
+      token,
+    });
+  }
+  catch(error: any){
+    // Handle validation errors (Mongoose) - DB model error
+    if (error instanceof mongoose.Error.ValidationError) {
+      const messages = Object.values(error.errors).map((val) => val.message);
+      res.status(400).json({ message: 'Validation failed', errors: messages });
+      return;
+    }
+
+    // Default catch-all for unknown errors
+    console.error('❌ Internal Server error');
+    res.status(500).json({ message: 'Internal server error' });
+  }
+  
+};
