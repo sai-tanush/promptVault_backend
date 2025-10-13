@@ -35,7 +35,7 @@ const UserSchema = new Schema<IUserDocument>({
 });
 
 // Pre-Save Hook (Password Hashing)
-UserSchema.pre('save', async function (next) {
+UserSchema.pre<IUserDocument>('save', async function (next) {
     const user = this;
 
     // Only hash the password if it has been modified (or is new)
