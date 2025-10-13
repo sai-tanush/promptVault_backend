@@ -2,7 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import mongoose from "mongoose";
-import router from "./routes/authRoutes"; // Import the router
+import router from "./routes/authRoutes";
 
 dotenv.config();
 
@@ -14,10 +14,10 @@ app.use(cors());
 
 // Routes
 app.get("/", (req, res) => {
-  res.send("PromptVault Backend is running 🚀");
+  res.send("PromptVault Backend is running");
 });
 
-// Mount the API routes
+// Default API routes
 app.use('/api/v1/auth', router);
 
 // Connect to MongoDB
