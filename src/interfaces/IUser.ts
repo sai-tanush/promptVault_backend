@@ -1,5 +1,4 @@
 import { Document } from 'mongoose';
-
 export interface IUser extends Document {
     username: string;
     email: string;
@@ -8,6 +7,6 @@ export interface IUser extends Document {
     createdAt: Date;
     updatedAt: Date;
 }
-export interface IUserDocument extends IUser {
+export interface IUserDocument extends IUser, Document {
     comparePassword(candidatePassword: string): Promise<boolean>;
 }
