@@ -9,8 +9,8 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
     const { username, email, password } = req.body;
 
     // Basic validation
-    if (!username || !email || !password) {
-      res.status(400).json({ message: 'All fields (username, email, password) are required' });
+    if (!username || !email ) {
+      res.status(400).json({ message: 'All fields (username, email) are required' });
       return;
     }
 
