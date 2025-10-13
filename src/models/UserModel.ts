@@ -76,10 +76,15 @@ UserSchema.pre('findOneAndUpdate', async function (next) {
   }
 });
 
-
 // Instance Methods (Password Comparison)
-UserSchema.methods.comparePassword = async function (candidatePassword: string): Promise<boolean> {
-    return bcrypt.compare(candidatePassword, this.password!);
+UserSchema.statics.authenticate = async function (email: string, password: string) {
+  const user = await this.findOne({ email }).select('+password');
+  if (!user) return null;
+
+  const isMatch = await user.comparePassword(password);
+  if (!isMatch) return null;
+
+  return user;
 };
 
 const User = model<IUserDocument>('User', UserSchema);
