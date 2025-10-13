@@ -76,7 +76,12 @@ UserSchema.pre('findOneAndUpdate', async function (next) {
   }
 });
 
-// Instance Methods (Password Comparison)
+// Instance Methods
+UserSchema.methods.comparePassword = async function (candidatePassword: string): Promise<boolean> {
+  return bcrypt.compare(candidatePassword, this.password!);
+};
+
+// Static authenticate method
 UserSchema.statics.authenticate = async function (email: string, password: string) {
   const user = await this.findOne({ email }).select('+password');
   if (!user) return null;
