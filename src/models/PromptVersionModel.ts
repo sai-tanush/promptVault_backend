@@ -2,9 +2,9 @@ import { Schema, model, Types } from 'mongoose';
 import { IPromptVersionDocument } from '../interfaces/IPromptVersion';
 
 const PromptVersionObject = new Schema({
-    title: { type: String, required: true },
-    description: { type: String, required: true },
-    tags: { type: [String], required: true},
+    title: { type: String },
+    description: { type: String },
+    tags: { type: [String] },
 }, { _id: false }); 
 
 const PromptVersionSchema = new Schema<IPromptVersionDocument>({
