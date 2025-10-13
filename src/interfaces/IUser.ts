@@ -8,6 +8,6 @@ export interface IUser extends Document {
     createdAt: Date;
     updatedAt: Date;
 }
-export interface IUserDocument extends IUser, Document {
+export interface IUserDocument extends IUser {
     comparePassword(candidatePassword: string): Promise<boolean>;
 }
