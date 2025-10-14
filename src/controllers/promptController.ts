@@ -174,3 +174,42 @@ export const updatePrompt = async (req: AuthRequest, res: Response ): Promise<vo
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+export const deletePrompt = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user || !req.user._id) {
+      res.status(401).json({ success: false, message: "Unauthorized" });
+      return;
+    }
+
+    const promptId = req.params.id;
+
+    // Check if the prompt exists
+    const prompt = await Prompt.findById(promptId);
+    if (!prompt) {
+      res.status(404).json({ success: false, message: "Prompt not found." });
+      return;
+    }
+
+    // Check ownership
+    if (prompt.userId.toString() !== req.user._id.toString()) {
+      res.status(403).json({ success: false, message: "Forbidden. Not your prompt." });
+      return;
+    }
+
+    // Delete all associated PromptVersions
+    await PromptVersion.deleteMany({ promptId: prompt._id });
+
+    // Delete the prompt itself
+    await Prompt.findByIdAndDelete(prompt._id);
+
+    res.status(200).json({
+      success: true,
+      message: "Prompt and all associated versions deleted successfully.",
+    });
+
+  } catch (error) {
+    console.error("❌ Internal Server error", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
