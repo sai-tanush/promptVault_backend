@@ -357,3 +357,51 @@ export const getPromptWithVersions = async (req: AuthRequest, res: Response): Pr
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
+
+export const restorePrompt = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user || !req.user._id) {
+      res.status(401).json({ success: false, message: "Unauthorized" });
+      return;
+    }
+
+    const promptId = req.params.id;
+
+    // Validate prompt ID format
+    if (!mongoose.Types.ObjectId.isValid(promptId)) {
+      res.status(400).json({ success: false, message: "Invalid prompt ID" });
+      return;
+    }
+
+    // Find the prompt that belongs to the user
+    const prompt = await Prompt.findOne({
+      _id: promptId,
+      userId: req.user._id,
+    });
+
+    if (!prompt) {
+      res.status(404).json({ success: false, message: "Prompt not found." });
+      return;
+    }
+
+    // Check if it's already archived
+    if (prompt.isDeleted) {
+      res.status(200).json({ success: true, message: "Prompt already archived." });
+      return;
+    }
+
+    // Remove it from archieved
+    prompt.isDeleted = true;
+    await prompt.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Prompt archived successfully.",
+      data: prompt,
+    });
+
+  } catch (error) {
+    console.error("❌ Error archiving prompt:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
