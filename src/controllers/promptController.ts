@@ -262,3 +262,51 @@ export const archivePrompt = async (req: AuthRequest, res: Response) : Promise<v
 		res.status(500).json({ message: "Internal server error" });
 	}
 }
+
+export const getPrompts = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?._id;
+    if (!userId) {
+      res.status(401).json({ success: false, message: "Unauthorized" });
+      return;
+    }
+
+    const { search, tag, isDeleted } = req.query;
+
+    // Build dynamic filter
+    const filter: any = { userId };
+
+    // Handle isDeleted logic
+    if (isDeleted === "true") {
+      filter.isDeleted = true;
+    } else {
+      // default: show only active prompts
+      filter.isDeleted = false;
+    }
+
+    // Search by title or description (case-insensitive)
+    if (search && typeof search === "string") {
+      filter.$or = [
+        { title: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    // Filter by tag
+    if (tag && typeof tag === "string") {
+      filter.tags = tag;
+    }
+
+    const prompts = await Prompt.find(filter).sort({ updatedAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: prompts.length,
+      data: prompts,
+    });
+
+  } catch (error) {
+    console.error("❌ Error fetching prompts:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
