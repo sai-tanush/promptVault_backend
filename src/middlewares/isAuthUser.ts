@@ -37,7 +37,7 @@ export const isAuthUser = async (req: AuthRequest, res: Response, next: NextFunc
 
     //Attach to req for controller use
     req.user = {
-      _id: user._id.toString(),
+      _id: String(user._id),
       email: user.email,
       username: user.username,
       role: user.role,
