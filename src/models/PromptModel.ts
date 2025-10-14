@@ -28,6 +28,11 @@ const PromptSchema = new Schema<IPromptDocument>({
         required: true,
         default: 1,
     },
+    isDeleted: {
+        type: Boolean,
+        required: true,
+        default: false
+    }
 }, {
     timestamps: true,
     collection: 'prompts'

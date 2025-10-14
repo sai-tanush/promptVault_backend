@@ -5,7 +5,8 @@ export interface IPrompt {
     title: string;
     description: string;
     tags: string[]; 
-    currentVersion: number; 
+    currentVersion: number;
+    isDeleted: boolean; 
     createdAt: Date;
     updatedAt: Date;
 }
