@@ -1,31 +1,53 @@
-import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
-import User from '../models/UserModel';
+import { Request, Response, NextFunction } from "express";
+import jwt, { JwtPayload } from "jsonwebtoken";
+import User from "../models/UserModel";
 
-interface AuthRequest extends Request {
-  user?: any;
+export interface AuthRequest extends Request {
+  user?: {
+    _id: string;
+    email: string;
+    username?: string;
+    role?: string;
+  };
 }
 
 export const isAuthUser = async (req: AuthRequest, res: Response, next: NextFunction) => {
-  let token;
-
-  // 1. Check for Authorization header
-  if (req.headers.authorization?.startsWith('Bearer')) {
-    token = req.headers.authorization.split(' ')[1];
-  }
-
-  if (!token) {
-    return res.status(401).json({ message: 'Not authorized, token missing' });
-  }
-
   try {
-    // 2. Verify token
-    const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
+    //Extract token from Authorization header
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ success: false, message: "Not authorized, token missing" });
+    }
 
-    // 3. Attach user info to request
-    req.user = await User.findById(decoded.id).select('-password');
+    const token = authHeader.split(" ")[1];
+
+    //Verify token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload & { id: string };
+
+    //Check decoded payload
+    if (!decoded || !decoded.id) {
+      return res.status(401).json({ success: false, message: "Invalid token payload" });
+    }
+
+    //Fetch user and ensure still exists
+    const user = await User.findById(decoded.id).select("_id email username role");
+    if (!user) {
+      return res.status(401).json({ success: false, message: "User not found" });
+    }
+
+    //Attach to req for controller use
+    req.user = {
+      _id: user._id.toString(),
+      email: user.email,
+      username: user.username,
+      role: user.role,
+    };
+
     next();
-  } catch (error) {
-    res.status(401).json({ message: 'Not authorized, token failed' });
+  } catch (error: any) {
+    if (error.name === "TokenExpiredError") {
+      return res.status(401).json({ success: false, message: "Token expired" });
+    }
+    return res.status(401).json({ success: false, message: "Not authorized, token invalid" });
   }
 };
