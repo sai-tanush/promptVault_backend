@@ -310,3 +310,50 @@ export const getPrompts = async (req: AuthRequest, res: Response): Promise<void>
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
+
+export const getPromptWithVersions = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user || !req.user._id) {
+      res.status(401).json({ success: false, message: "Unauthorized" });
+      return;
+    }
+
+    const promptId = req.params.id;
+
+    // Validate promptId format
+    if (!mongoose.Types.ObjectId.isValid(promptId)) {
+      res.status(400).json({ success: false, message: "Invalid prompt ID" });
+      return;
+    }
+
+    // Find the prompt that belongs to the user and is not deleted
+    const prompt = await Prompt.findOne({
+      _id: promptId,
+      userId: req.user._id,
+      isDeleted: false,
+    });
+
+    if (!prompt) {
+      res.status(404).json({ success: false, message: "Prompt not found or archived." });
+      return;
+    }
+
+    // Fetch all associated versions sorted by versionNumber
+    const versions = await PromptVersion.find({ promptId })
+      .sort({ versionNumber: 1 })
+      .select("-__v -updatedAt");
+
+    res.status(200).json({
+      success: true,
+      message: "Prompt and its versions fetched successfully.",
+      data: {
+        prompt,
+        versions,
+      },
+    });
+
+  } catch (error) {
+    console.error("❌ Error fetching prompt with versions:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
