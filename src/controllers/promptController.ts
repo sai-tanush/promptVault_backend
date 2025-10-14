@@ -43,6 +43,7 @@ export const createPrompt = async (req: AuthRequest, res: Response ): Promise<vo
 			title: trimmedTitle,
 			description: trimmedDescription,
 			tags: cleanTags,
+			isDeleted: false,
 			currentVersion: 1,
 		});
 
