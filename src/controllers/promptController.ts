@@ -213,3 +213,52 @@ export const deletePrompt = async (req: AuthRequest, res: Response): Promise<voi
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+export const archivePrompt = async (req: AuthRequest, res: Response) : Promise<void> => {
+	try{
+		if (!req.user || !req.user._id) {
+		res.status(401).json({ success: false, message: "Unauthorized" });
+		return;
+		}
+
+		const promptId = req.params.id;
+
+		// Check if the prompt exists
+		const prompt = await Prompt.findById(promptId);
+		if (!prompt) {
+		res.status(404).json({ success: false, message: "Prompt not found." });
+		return;
+		}
+
+		// Check ownership
+		if (prompt.userId.toString() !== req.user._id.toString()) {
+		res.status(403).json({ success: false, message: "Forbidden. Not your prompt." });
+		return;
+		}
+
+		// If already archived
+		if (prompt.isDeleted) {
+		res.status(200).json({ success: true, message: "Prompt is already archived." });
+		return;
+		}
+
+		// Archive the prompt
+		prompt.isDeleted = true;
+		await prompt.save();
+
+		res.status(200).json({
+		success: true,
+		message: "Prompt archived successfully.",
+		data: prompt,
+		});
+	}
+	catch(error: any){
+		console.error("❌ Internal Server error:", error);
+		if (error instanceof mongoose.Error.ValidationError) {
+		const messages = Object.values(error.errors).map((val) => val.message);
+		res.status(400).json({ message: "Validation failed", errors: messages });
+		return;
+		}
+		res.status(500).json({ message: "Internal server error" });
+	}
+}
