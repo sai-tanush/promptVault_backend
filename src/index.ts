@@ -2,7 +2,8 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import mongoose from "mongoose";
-import router from "./routes/authRoutes";
+import authRoutes from "../src/routes/authRoutes";
+import promptRoutes from "../src/routes/promptRoutes";
 
 dotenv.config();
 
@@ -18,7 +19,10 @@ app.get("/", (req, res) => {
 });
 
 // Default API routes
-app.use('/api/v1/auth', router);
+app.use('/api/v1/auth', authRoutes);
+
+// Prompt routes
+app.use("/api/v1/prompts", promptRoutes);
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URL!)
