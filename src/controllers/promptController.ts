@@ -267,7 +267,7 @@ export const archivePrompt = async (req: AuthRequest, res: Response) : Promise<v
 	}
 }
 
-export const getPrompts = async (req: AuthRequest, res: Response): Promise<void> => {
+export const getPromptWithLatestVersion = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user?._id;
     if (!userId) {
@@ -277,36 +277,56 @@ export const getPrompts = async (req: AuthRequest, res: Response): Promise<void>
 
     const { search, tag, isDeleted } = req.query;
 
-    // Build dynamic filter
-    const filter: any = { userId };
+    // filter prompts by user and isDeleted
+    const promptFilter: any = { userId };
+    promptFilter.isDeleted = isDeleted === "true";
 
-    // Handle isDeleted logic
-    if (isDeleted === "true") {
-      filter.isDeleted = true;
-    } else {
-      // default: show only active prompts
-      filter.isDeleted = false;
-    }
+    // fetch prompts
+    const prompts = await Prompt.find(promptFilter).sort({ updatedAt: -1 });
 
-    // Search by title or description (case-insensitive)
-    if (search && typeof search === "string") {
-      filter.$or = [
-        { title: { $regex: search, $options: "i" } },
-        { description: { $regex: search, $options: "i" } },
-      ];
-    }
+    // Fetch latest version for each prompt
+    const promptsWithVersion = await Promise.all(
+      prompts.map(async (prompt) => {
+        const latestVersion = await PromptVersion.findOne({ promptId: prompt._id })
+          .sort({ versionNumber: -1 })
+          .lean();
 
-    // Filter by tag
-    if (tag && typeof tag === "string") {
-      filter.tags = tag;
-    }
+        return {
+          _id: prompt._id,
+          userId: prompt.userId,
+          isDeleted: prompt.isDeleted,
+          createdAt: prompt.createdAt,
+          updatedAt: prompt.updatedAt,
+          version: latestVersion?.afterObject ?? null,
+        };
+      })
+    );
 
-    const prompts = await Prompt.find(filter).sort({ updatedAt: -1 });
+    // filter by search or tag on the latest version
+    const filtered = promptsWithVersion.filter((p) => {
+      const v = p.version;
+      if (!v) return false;
+
+      let matches = true;
+
+      if (search && typeof search === "string") {
+        const s = search.toLowerCase();
+        matches =
+          v.title.toLowerCase().includes(s) ||
+          v.description.toLowerCase().includes(s);
+      }
+
+      if (matches && tag && typeof tag === "string") {
+        matches = v.tags?.includes(tag) ?? false;
+      }
+
+      return matches;
+    });
 
     res.status(200).json({
       success: true,
-      count: prompts.length,
-      data: prompts,
+      count: filtered.length,
+      data: filtered,
     });
 
   } catch (error) {
