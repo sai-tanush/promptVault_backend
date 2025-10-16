@@ -335,7 +335,7 @@ export const getPromptWithLatestVersion = async (req: AuthRequest, res: Response
   }
 };
 
-export const getPromptWithVersions = async (req: AuthRequest, res: Response): Promise<void> => {
+export const getPromptWithAllVersions = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     if (!req.user || !req.user._id) {
       res.status(401).json({ success: false, message: "Unauthorized" });
@@ -355,7 +355,7 @@ export const getPromptWithVersions = async (req: AuthRequest, res: Response): Pr
       _id: promptId,
       userId: req.user._id,
       isDeleted: false,
-    });
+    }).lean();
 
     if (!prompt) {
       res.status(404).json({ success: false, message: "Prompt not found or archived." });
@@ -365,13 +365,24 @@ export const getPromptWithVersions = async (req: AuthRequest, res: Response): Pr
     // Fetch all associated versions sorted by versionNumber
     const versions = await PromptVersion.find({ promptId })
       .sort({ versionNumber: 1 })
-      .select("-__v -updatedAt");
+      .select("-__v -updatedAt")
+      .lean();
+
+    // Latest version
+    const latestVersion = versions.length ? versions[versions.length - 1].afterObject : null;
 
     res.status(200).json({
       success: true,
       message: "Prompt and its versions fetched successfully.",
       data: {
-        prompt,
+        prompt: {
+          _id: prompt._id,
+          userId: prompt.userId,
+          isDeleted: prompt.isDeleted,
+          createdAt: prompt.createdAt,
+          updatedAt: prompt.updatedAt,
+          lastestVersion: latestVersion,
+        },
         versions,
       },
     });
