@@ -23,13 +23,11 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
 
     // Create new user
     const user: IUserDocument = await User.create({ username, email, password });
-    const token = generateToken((user._id as String).toString());
 
     // Respond success
     res.status(201).json({
       message: 'User registered successfully',
       user: { id: user._id, username: user.username, email: user.email },
-      token,
     });
   } catch (error: any) {
     // Handle duplicate key error (MongoDB) when multiple requests come in together
