@@ -40,11 +40,7 @@ export const createPrompt = async (req: AuthRequest, res: Response ): Promise<vo
 		// Create the new prompt
 		const newPrompt = await Prompt.create({
 			userId: new mongoose.Types.ObjectId(req.user._id.toString()),
-			title: trimmedTitle,
-			description: trimmedDescription,
-			tags: cleanTags,
 			isDeleted: false,
-			currentVersion: 1,
 		});
 
 		// Create the initial version record
@@ -53,9 +49,9 @@ export const createPrompt = async (req: AuthRequest, res: Response ): Promise<vo
 			event: 'create',
 			beforeObject: null,
 			afterObject: {
-				title: newPrompt.title,
-				description: newPrompt.description,
-				tags: newPrompt.tags,
+				title: trimmedTitle,
+				description: trimmedDescription,
+				tags: cleanTags,
 			},
 			versionNumber: 1,
 		});
@@ -63,7 +59,15 @@ export const createPrompt = async (req: AuthRequest, res: Response ): Promise<vo
 		res.status(201).json({
 		success: true,
 		message: "Prompt created successfully.",
-		data: newPrompt,
+		data: {
+      promptId: newPrompt._id,
+      version: {
+        title: trimmedTitle,
+        description: trimmedDescription,
+        tags: cleanTags,
+        versionNumber: 1,
+      },
+    }, 
 		});
 	}	
 	catch(error){
