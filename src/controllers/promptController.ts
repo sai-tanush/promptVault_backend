@@ -96,7 +96,7 @@ export const updatePrompt = async (req: AuthRequest, res: Response ): Promise<vo
 
     // Fetch the prompt
     const prompt = await Prompt.findById(promptId);
-    if (!prompt) {
+    if (!prompt || prompt.isDeleted) {
       res.status(404).json({ success: false, message: "Prompt not found." });
       return;
     }
@@ -113,59 +113,59 @@ export const updatePrompt = async (req: AuthRequest, res: Response ): Promise<vo
       return;
     }
 
-	//Basic validation for tags
+	  //Basic validation for tags
     if (tags && (!Array.isArray(tags) || tags.some((t) => typeof t !== "string"))) {
       res.status(400).json({ success: false, message: "Tags must be an array of strings." });
       return;
     }
 
     // Trim inputs
-    const trimmedTitle = title?.trim() || prompt.title;
-    const trimmedDescription = description?.trim() || prompt.description;
-    const cleanTags = tags ? tags.map((t: string) => t.trim()) : prompt.tags;
+    const trimmedTitle = title?.trim();
+    const trimmedDescription = description?.trim();
+    const cleanTags = (tags || []).map((t: string) => t.trim());
+
+     // Fetch the latest version
+    const latestVersion = await PromptVersion.findOne({ promptId })
+      .sort({ versionNumber: -1 })
+      .lean();
 
     // Check if there is any change
     const hasChanged =
-      trimmedTitle !== prompt.title ||
-      trimmedDescription !== prompt.description ||
-      JSON.stringify(cleanTags) !== JSON.stringify(prompt.tags);
+      !latestVersion ||
+      trimmedTitle !== latestVersion.afterObject?.title ||
+      trimmedDescription !== latestVersion.afterObject?.description ||
+      JSON.stringify(cleanTags) !== JSON.stringify(latestVersion.afterObject?.tags);
 
     if (!hasChanged) {
-      res.status(200).json({ success: true, message: "No changes detected.", data: prompt });
+      res.status(200).json({ 
+        success: true, 
+        message: "No changes detected.", 
+        data: latestVersion?.afterObject || {}, 
+      });
       return;
     }
 
     // Save old state for versioning
-    const beforeObject = {
-      title: prompt.title,
-      description: prompt.description,
-      tags: prompt.tags,
-    };
+    const beforeObject = latestVersion?.afterObject ?? null;
+    const newVersionNumber = latestVersion ? latestVersion.versionNumber + 1 : 1;
 
-    // Update prompt
-    prompt.title = trimmedTitle;
-    prompt.description = trimmedDescription;
-    prompt.tags = cleanTags;
-    prompt.currentVersion += 1; // increment version
-    await prompt.save();
-
-    // Create version record
-    await PromptVersion.create({
+    // Create new version record
+    const newVersion = await PromptVersion.create({
       promptId: prompt._id,
-      event: 'update',
+      event: "update",
       beforeObject,
       afterObject: {
-        title: prompt.title,
-        description: prompt.description,
-        tags: prompt.tags,
+        title: trimmedTitle,
+        description: trimmedDescription,
+        tags: cleanTags,
       },
-      versionNumber: prompt.currentVersion,
+      versionNumber: newVersionNumber,
     });
 
     res.status(200).json({
       success: true,
       message: "Prompt updated successfully.",
-      data: prompt,
+      data: newVersion.afterObject,
     });
 
   } catch (error) {
