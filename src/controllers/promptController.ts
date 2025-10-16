@@ -420,7 +420,7 @@ export const restorePrompt = async (req: AuthRequest, res: Response): Promise<vo
     }
 
     // Check if it's already archived
-    if (prompt.isDeleted) {
+    if (!prompt.isDeleted) {
       res.status(200).json({ success: true, message: "Prompt already archived." });
       return;
     }
@@ -431,7 +431,7 @@ export const restorePrompt = async (req: AuthRequest, res: Response): Promise<vo
 
     res.status(200).json({
       success: true,
-      message: "Prompt archived successfully.",
+      message: "Prompt restored successfully.",
       data: prompt,
     });
 
