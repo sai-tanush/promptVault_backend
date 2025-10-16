@@ -91,7 +91,7 @@ export const updatePrompt = async (req: AuthRequest, res: Response ): Promise<vo
       return;
     }
 
-    const promptId = req.params.id;
+    const promptId = req.params.promptId;
     const { title, description, tags } = req.body;
 
     // Fetch the prompt
@@ -186,7 +186,7 @@ export const deletePrompt = async (req: AuthRequest, res: Response): Promise<voi
       return;
     }
 
-    const promptId = req.params.id;
+    const promptId = req.params.promptId;
 
     // Check if the prompt exists
     const prompt = await Prompt.findById(promptId);
@@ -225,7 +225,7 @@ export const archivePrompt = async (req: AuthRequest, res: Response) : Promise<v
 		return;
 		}
 
-		const promptId = req.params.id;
+		const promptId = req.params.promptId;
 
 		// Check if the prompt exists
 		const prompt = await Prompt.findById(promptId);
@@ -342,7 +342,7 @@ export const getPromptWithAllVersions = async (req: AuthRequest, res: Response):
       return;
     }
 
-    const promptId = req.params.id;
+    const promptId = req.params.promptId;
 
     // Validate promptId format
     if (!mongoose.Types.ObjectId.isValid(promptId)) {
@@ -400,7 +400,7 @@ export const restorePrompt = async (req: AuthRequest, res: Response): Promise<vo
       return;
     }
 
-    const promptId = req.params.id;
+    const promptId = req.params.promptId;
 
     // Validate prompt ID format
     if (!mongoose.Types.ObjectId.isValid(promptId)) {
@@ -438,5 +438,46 @@ export const restorePrompt = async (req: AuthRequest, res: Response): Promise<vo
   } catch (error) {
     console.error("❌ Error archiving prompt:", error);
     res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+export const getAllUserPrompts = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?._id;
+
+    if (!userId) {
+      res.status(401).json({ success: false, message: "Unauthorized" });
+      return;
+    }
+
+    const { isDeleted } = req.body;
+
+    // Build filter dynamically
+    const filter: any = { userId };
+
+    if (isDeleted === true) {
+      //archieved prompts
+      filter.isDeleted = true;
+    } else {
+      //active prompts
+      filter.isDeleted = false;
+    }
+
+    const prompts = await Prompt.find(filter)
+      .sort({ updatedAt: -1 })
+      .lean();
+
+    res.status(200).json({
+      success: true,
+      count: prompts.length,
+      message: isDeleted ? "Archived prompts fetched successfully." : "Active prompts fetched successfully.",
+      data: prompts,
+    });
+  } catch (error) {
+    console.error("❌ Error fetching user prompts:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 };
