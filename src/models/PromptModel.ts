@@ -8,17 +8,20 @@ const PromptSchema = new Schema<IPromptDocument>({
         ref: 'User', 
         index: true,
     },
+    title: {
+        type: String,
+        required: [true, 'Title is required'],
+        trim: true,
+    },
     isDeleted: {
         type: Boolean,
         required: true,
         default: false
-    }
+    },
 }, {
     timestamps: true,
     collection: 'prompts'
 });
-
-PromptSchema.index({ userId: 1 });
 
 const Prompt = model<IPromptDocument>('Prompt', PromptSchema);
 

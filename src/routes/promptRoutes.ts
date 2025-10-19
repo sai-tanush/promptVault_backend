@@ -9,7 +9,7 @@ router.patch("/:promptId", isAuthUser, updatePrompt);
 router.delete("/:promptId", isAuthUser, deletePrompt)
 router.patch("/:promptId/archive", isAuthUser, archivePrompt);
 router.patch("/:promptId/restore", isAuthUser, restorePrompt);
-router.post("/", isAuthUser, getAllUserPrompts)
+router.get("/", isAuthUser, getAllUserPrompts)
 router.get("/:promptId/latest", isAuthUser, getPromptWithLatestVersion);
 router.get("/:promptId/versions", isAuthUser, getPromptWithAllVersions);
 

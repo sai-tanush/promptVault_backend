@@ -40,6 +40,7 @@ export const createPrompt = async (req: AuthRequest, res: Response ): Promise<vo
 		// Create the new prompt
 		const newPrompt = await Prompt.create({
 			userId: new mongoose.Types.ObjectId(req.user._id.toString()),
+      title: trimmedTitle,
 			isDeleted: false,
 		});
 
@@ -61,6 +62,8 @@ export const createPrompt = async (req: AuthRequest, res: Response ): Promise<vo
 		message: "Prompt created successfully.",
 		data: {
       promptId: newPrompt._id,
+      isDeleted: newPrompt.isDeleted,
+      createdAt: newPrompt.createdAt,
       version: {
         title: trimmedTitle,
         description: trimmedDescription,
@@ -79,7 +82,7 @@ export const createPrompt = async (req: AuthRequest, res: Response ): Promise<vo
 		}
 		
 		// Default catch-all for unknown errors
-		console.error('❌ Internal Server error');
+		console.error('❌ Internal Server error', error);
 		res.status(500).json({ message: 'Internal server error' });
 	}
 }
@@ -421,12 +424,12 @@ export const restorePrompt = async (req: AuthRequest, res: Response): Promise<vo
 
     // Check if it's already archived
     if (!prompt.isDeleted) {
-      res.status(200).json({ success: true, message: "Prompt already archived." });
+      res.status(200).json({ success: true, message: "Prompt already active." });
       return;
     }
 
     // Remove it from archieved
-    prompt.isDeleted = true;
+    prompt.isDeleted = false;
     await prompt.save();
 
     res.status(200).json({
@@ -450,7 +453,8 @@ export const getAllUserPrompts = async (req: AuthRequest, res: Response): Promis
       return;
     }
 
-    const { isDeleted } = req.body;
+    // Get from query instead of body
+    const isDeleted = req.query.isDeleted === "true"; 
 
     // Build filter dynamically
     const filter: any = { userId };
