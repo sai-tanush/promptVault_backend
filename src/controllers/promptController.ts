@@ -447,34 +447,71 @@ export const restorePrompt = async (req: AuthRequest, res: Response): Promise<vo
 export const getAllUserPrompts = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user?._id;
-
     if (!userId) {
       res.status(401).json({ success: false, message: "Unauthorized" });
       return;
     }
 
-    // Get from query instead of body
-    const isDeleted = req.query.isDeleted === "true"; 
+    const isDeleted = req.query.isDeleted === "true";
+    const search = (req.query.search as string)?.trim() || "";
 
-    // Build filter dynamically
-    const filter: any = { userId };
+    // Base filter for user's prompts
+    const baseFilter: any = { userId, isDeleted };
 
-    if (isDeleted === true) {
-      //archieved prompts
-      filter.isDeleted = true;
+    let prompts;
+
+    if (search) {
+      const regex = new RegExp(search, "i");
+
+      // Step 1️⃣: Find prompts that match directly by title or tags
+      const directMatches = await Prompt.find({
+        ...baseFilter,
+        $or: [
+          { title: { $regex: regex } },
+          { tags: { $elemMatch: { $regex: regex } } },
+        ],
+      }).lean();
+
+      // Step 2️⃣: Find promptIds from versions that match the search
+      const versionMatches = await PromptVersion.find({
+        $or: [
+          { "afterObject.title": { $regex: regex } },
+          { "afterObject.tags": { $elemMatch: { $regex: regex } } },
+          { "afterObject.description": { $regex: regex } }, // optional if you have this
+          { "afterObject.content": { $regex: regex } }, // optional field
+        ],
+      })
+        .distinct("promptId"); // only get unique prompt IDs
+
+      // Step 3️⃣: Combine both prompt sets (unique by _id)
+      const combinedIds = [
+        ...new Set([
+          ...directMatches.map((p) => p._id.toString()),
+          ...versionMatches.map((id) => id.toString()),
+        ]),
+      ];
+
+      // Step 4️⃣: Fetch all combined prompts for this user
+      prompts = await Prompt.find({
+        _id: { $in: combinedIds },
+        userId,
+        isDeleted,
+      })
+        .sort({ updatedAt: -1 })
+        .lean();
     } else {
-      //active prompts
-      filter.isDeleted = false;
+      // No search → just get by isDeleted
+      prompts = await Prompt.find(baseFilter).sort({ updatedAt: -1 }).lean();
     }
-
-    const prompts = await Prompt.find(filter)
-      .sort({ updatedAt: -1 })
-      .lean();
 
     res.status(200).json({
       success: true,
       count: prompts.length,
-      message: isDeleted ? "Archived prompts fetched successfully." : "Active prompts fetched successfully.",
+      message: search
+        ? `Prompts related to "${search}" fetched successfully.`
+        : isDeleted
+        ? "Archived prompts fetched successfully."
+        : "Active prompts fetched successfully.",
       data: prompts,
     });
   } catch (error) {
