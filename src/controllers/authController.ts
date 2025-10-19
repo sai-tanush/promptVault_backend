@@ -94,7 +94,7 @@ export const loginUser = async (req: AuthRequest, res: Response) : Promise<void>
 
 export const getUserDetails = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const userId = (req.user as any)?.id; 
+    const userId = (req.user as any)?._id; 
 
     if (!userId) {
       res.status(401).json({ message: 'Authentication required' });
@@ -109,6 +109,7 @@ export const getUserDetails = async (req: AuthRequest, res: Response): Promise<v
     }
 
     res.status(200).json({
+      success: true,
       id: user._id,
       username: user.username,
       email: user.email,
