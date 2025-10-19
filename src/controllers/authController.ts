@@ -3,8 +3,9 @@ import { generateToken } from '../utils/generateToken';
 import User from '../models/UserModel';
 import { IUserDocument } from '../interfaces/IUser';
 import mongoose from 'mongoose';
+import { AuthRequest } from '../middlewares/isAuthUser';
 
-export const registerUser = async (req: Request, res: Response): Promise<void> => {
+export const registerUser = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { username, email, password } = req.body;
 
@@ -49,7 +50,7 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
   }
 };
 
-export const loginUser = async (req: Request, res: Response) : Promise<void> => {
+export const loginUser = async (req: AuthRequest, res: Response) : Promise<void> => {
 
   try{
     const { email, password } = req.body;
@@ -91,7 +92,7 @@ export const loginUser = async (req: Request, res: Response) : Promise<void> => 
   
 };
 
-export const getUserDetails = async (req: Request, res: Response): Promise<void> => {
+export const getUserDetails = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const userId = (req.user as any)?.id; 
 
