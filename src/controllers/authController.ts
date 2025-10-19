@@ -90,3 +90,30 @@ export const loginUser = async (req: Request, res: Response) : Promise<void> => 
   }
   
 };
+
+export const getUserDetails = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = (req.user as any)?.id; 
+
+    if (!userId) {
+      res.status(401).json({ message: 'Authentication required' });
+      return;
+    }
+
+    const user = await User.findById(userId).select('-password');
+
+    if (!user) {
+      res.status(404).json({ message: 'User not found' });
+      return;
+    }
+
+    res.status(200).json({
+      id: user._id,
+      username: user.username,
+      email: user.email,
+    });
+  } catch (error: any) {
+    console.error('❌ Internal Server error fetching user details:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
