@@ -13,4 +13,5 @@ router.get("/", isAuthUser, getAllUserPrompts)
 router.get("/:promptId/latest", isAuthUser, getPromptWithLatestVersion);
 router.get("/:promptId/versions", isAuthUser, getPromptWithAllVersions);
 
+
 export default router;
