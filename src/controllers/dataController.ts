@@ -4,6 +4,7 @@ import PromptVersion from '../models/PromptVersionModel';
 import mongoose from 'mongoose';
 import { AuthRequest } from '../middlewares/isAuthUser';
 
+
 export const getAllPromptsWithVersions = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user?._id;
@@ -15,32 +16,37 @@ export const getAllPromptsWithVersions = async (req: AuthRequest, res: Response)
     // Fetch all prompts for the user
     const userPrompts = await Prompt.find({ userId: userId }).lean();
 
-    // Fetch all versions for each prompt
-    const promptsWithVersions = await Promise.all(
+    // Map prompts to the desired JSON structure
+    const formattedPrompts = await Promise.all(
       userPrompts.map(async (prompt) => {
+        // Fetch all versions for the current prompt
         const versions = await PromptVersion.find({ promptId: prompt._id })
-          .sort({ versionNumber: 1 })
+          .sort({ versionNumber: 1 }) // Ensure versions are ordered
           .lean();
-        
-        // Extract the latest version's afterObject for convenience if needed, or just return all versions
-        const latestVersion = versions.length > 0 ? versions[versions.length - 1].afterObject : null;
+
+        // Format each version according to the user's request
+        const formattedVersions = versions.map((version) => {
+          // Safely access properties from afterObject
+          const afterObject = version.afterObject;
+          return {
+            title: (afterObject && typeof afterObject.title === 'string') ? afterObject.title : '', // Use title from afterObject, provide default if not string or if afterObject is null/undefined
+            tage: (afterObject && Array.isArray(afterObject.tags)) ? afterObject.tags : [], // Use tags from afterObject, provide default if not array or if afterObject is null/undefined
+            description: (afterObject && typeof afterObject.description === 'string') ? afterObject.description : '', // Use description from afterObject, provide default if not string or if afterObject is null/undefined
+          };
+        });
 
         return {
-          title: prompt.title, // Assuming Prompt model has a title field, otherwise use latestVersion.title
-          isDeleted: prompt.isDeleted,
-          createdAt: prompt.createdAt,
-          updatedAt: prompt.updatedAt,
-          latestVersion: latestVersion, // Include latest version data
-          allVersions: versions, // Include all versions data
+          title: prompt.title, // Main prompt title
+          versions: formattedVersions, // Array of formatted versions
         };
       })
     );
 
     res.status(200).json({
       success: true,
-      count: promptsWithVersions.length,
-      message: "All prompts with their versions fetched successfully.",
-      data: promptsWithVersions,
+      count: formattedPrompts.length,
+      message: "All prompts with their versions fetched successfully in the requested format.",
+      data: formattedPrompts,
     });
 
   } catch (error) {
@@ -56,6 +62,10 @@ export const importPromptsFromJson = async (req: AuthRequest, res: Response): Pr
       res.status(401).json({ success: false, message: "Unauthorized" });
       return;
     }
+
+    // Assuming the JSON data is sent in the request body.
+    // In a real-world scenario, you'd likely use middleware like 'multer' to handle file uploads.
+    // For this example, we'll assume req.body contains the parsed JSON array of prompts.
     const importedData = req.body;
 
     if (!Array.isArray(importedData)) {
@@ -70,18 +80,20 @@ export const importPromptsFromJson = async (req: AuthRequest, res: Response): Pr
       // Validate prompt structure
       if (!promptData.title || !promptData.versions || !Array.isArray(promptData.versions) || promptData.versions.length === 0) {
         console.warn("Skipping invalid prompt data:", promptData);
-        continue;
+        continue; // Skip this prompt if it's malformed
       }
 
+      // Create the main Prompt entry
       const newPrompt = await Prompt.create({
         userId: new mongoose.Types.ObjectId(userId.toString()),
         title: promptData.title.trim(),
-        isDeleted: promptData.isDeleted || false,
+        isDeleted: promptData.isDeleted || false, // Default to not deleted if not specified
       });
 
+      // Create all associated versions
       for (let i = 0; i < promptData.versions.length; i++) {
         const versionData = promptData.versions[i];
-        const versionNumber = i + 1;
+        const versionNumber = i + 1; // Assuming versions are ordered in the JSON
 
         // Basic validation for version data
         if (!versionData.afterObject || !versionData.event) {
