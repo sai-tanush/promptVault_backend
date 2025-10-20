@@ -4,6 +4,7 @@ import cors from "cors";
 import mongoose from "mongoose";
 import authRoutes from "../src/routes/authRoutes";
 import promptRoutes from "../src/routes/promptRoutes";
+import dataRoutes from "../src/routes/dataRoutes";
 
 dotenv.config();
 
@@ -28,6 +29,9 @@ app.use('/api/v1/auth', authRoutes);
 
 // Prompt routes
 app.use("/api/v1/prompts", promptRoutes);
+
+//Data routes
+app.use("/api/v1/data", dataRoutes);
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URL!)
