@@ -76,22 +76,6 @@ http://localhost:5001/
 
 ---
 
-## Project Structure (Example)
-
-```
-project-root/
-├── src/
-│   ├── routes/
-│   ├── controllers/
-│   ├── models/
-│   └── server.js
-├── package.json
-├── .env
-└── README.md
-```
-
----
-
 ## Notes
 
 - Make sure your database credentials and API keys are correctly set inside `.env`.
