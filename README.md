@@ -1,10 +1,10 @@
-# 🚀 Node.js Backend Setup Guide
+#  Node.js Backend Setup Guide
 
 This document provides a step-by-step guide to set up and run the backend server locally.
 
 ---
 
-## 🧩 Prerequisites
+##  Prerequisites
 
 Before getting started, ensure you have the following installed:
 
@@ -14,7 +14,7 @@ Before getting started, ensure you have the following installed:
 
 ---
 
-## 🧱 Setup Instructions
+##  Setup Instructions
 
 ### 1. Clone the Repository
 
@@ -45,7 +45,7 @@ Then, rename it to `.env`.
 mv .env_backend .env
 ```
 
-> ⚠️ The backend won’t run properly without this file, as it contains essential environment configurations.
+>  The backend won’t run properly without this file, as it contains essential environment configurations.
 
 ---
 
@@ -59,7 +59,7 @@ npm run dev
 
 ---
 
-## ✅ Server Running
+## Server Running
 
 After a successful start, you should see something like:
 
@@ -76,7 +76,7 @@ http://localhost:5001/
 
 ---
 
-## 📁 Project Structure (Example)
+## Project Structure (Example)
 
 ```
 project-root/
@@ -92,7 +92,7 @@ project-root/
 
 ---
 
-## 💡 Notes
+## Notes
 
 - Make sure your database credentials and API keys are correctly set inside `.env`.
 - If you face any issues, try removing `node_modules` and running `npm install` again.
