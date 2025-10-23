@@ -86,15 +86,15 @@ export const loginUser = async (req: AuthRequest, res: Response) : Promise<void>
     }
 
     // Default catch-all for unknown errors
-    console.error('❌ Internal Server error');
+    console.error('❌ Internal Server error', error);
     res.status(500).json({ message: 'Internal server error' });
   }
-  
+
 };
 
 export const getUserDetails = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const userId = (req.user as any)?._id; 
+    const userId = (req.user as any)?._id;
 
     if (!userId) {
       res.status(401).json({ message: 'Authentication required' });
